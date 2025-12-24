@@ -44,28 +44,34 @@ app.post("/webhook", async (req, res) => {
     if (event.message && event.message.text) {
       const text = event.message.text.toLowerCase();
 
-      if (text.includes("hello") || text.includes("сайн байна уу")) {
+      // First-time unknown message: ask for contact + show Button Menu
+      if (!userAskedForContact[senderId]) {
+        await sendMessage(senderId, "Та холбоо барих дугаараа үлдээнэ үү 📞");
+        userAskedForContact[senderId] = true;
+
+        // Optional reset after 24h
+        setTimeout(() => {
+          userAskedForContact[senderId] = false;
+        }, 24 * 60 * 60 * 1000);
+
+        // Send Button Menu immediately
         await sendButtonMenu(senderId);
-      } else if (text.includes("тэтгэлэг")) {
-        await sendMessage(senderId, `Солонгосын засгийн газрын тэтгэлэг маань шилдэг 74 их сургуулийн 400 орчим мэргэжлээс сонгон суралцах боломжтой...
+      }
+      else {
+        // Normal keyword handling
+        if (text.includes("hello") || text.includes("сайн уу")) {
+          await sendButtonMenu(senderId);
+        } else if (text.includes("тэтгэлэг")) {
+          await sendMessage(senderId, `Солонгосын засгийн газрын тэтгэлэг маань шилдэг 74 их сургуулийн 400 орчим мэргэжлээс сонгон суралцах боломжтой...
 1️⃣ Та ямар мэргэжлээр суралцах төлөвлөгөөтэй вэ?
 2️⃣ Хэдэн онд аль сургуулийг хэд голчтой төгссөн бэ?
 3️⃣ Та дараах шаардлагыг хангасан уу?`);
-      } else if (text.includes("холбоо барих")) {
-        await sendMessage(senderId, "📞 Утас: 8583-2416, 8874-6951");
-      } else if (text.includes("хаяг") || text.includes("байршил")) {
-        await sendMessage(senderId, "📍 UBH center, 12 давхар, 1223 тоот");
-      } else {
-        // Ask for contact only once
-        if (!userAskedForContact[senderId]) {
-          await sendMessage(senderId, "Та холбоо барих дугаараа үлдээнэ үү 📞");
-          userAskedForContact[senderId] = true;
-
-          // Optional: reset after 24h
-          setTimeout(() => {
-            userAskedForContact[senderId] = false;
-          }, 24 * 60 * 60 * 1000);
+        } else if (text.includes("холбоо барих")) {
+          await sendMessage(senderId, "📞 Утас: 8583-2416, 8874-6951");
+        } else if (text.includes("хаяг") || text.includes("байршил")) {
+          await sendMessage(senderId, "📍 UBH center, 12 давхар, 1223 тоот");
         }
+        // else do nothing (already asked for contact)
       }
     }
 
