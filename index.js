@@ -14,6 +14,9 @@ if (!PAGE_TOKEN) {
   process.exit(1);
 }
 
+/* ---------- In-memory user state ---------- */
+const userAskedForContact = {}; // track if user already received "ask contact" message
+
 /* ---------- Webhook verification ---------- */
 app.get("/webhook", (req, res) => {
   const mode = req.query["hub.mode"];
@@ -53,7 +56,16 @@ app.post("/webhook", async (req, res) => {
       } else if (text.includes("хаяг") || text.includes("байршил")) {
         await sendMessage(senderId, "📍 UBH center, 12 давхар, 1223 тоот");
       } else {
-        await sendMessage(senderId, "Би ойлгоогүй байна 😅");
+        // Ask for contact only once
+        if (!userAskedForContact[senderId]) {
+          await sendMessage(senderId, "Та холбоо барих дугаараа үлдээнэ үү 📞");
+          userAskedForContact[senderId] = true;
+
+          // Optional: reset after 24h
+          setTimeout(() => {
+            userAskedForContact[senderId] = false;
+          }, 24 * 60 * 60 * 1000);
+        }
       }
     }
 
